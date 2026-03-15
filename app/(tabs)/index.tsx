@@ -1,98 +1,147 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  StyleSheet, View, Text, TouchableOpacity, 
+  ScrollView, SafeAreaView, useColorScheme, Platform, StatusBar 
+} from 'react-native';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+// --- Компонент картки для списку ---
+const CardItem = ({ title, description, icon, isDark }: any) => (
+  <View style={[styles.card, { backgroundColor: isDark ? '#1E1E1E' : '#FFFFFF' }]}>
+    <View style={styles.cardIconContainer}><Text style={{ fontSize: 24 }}>{icon}</Text></View>
+    <View style={styles.cardTextContainer}>
+      <Text style={[styles.cardTitle, { color: isDark ? '#FFF' : '#000' }]}>{title}</Text>
+      <Text style={[styles.cardSubtitle, { color: isDark ? '#BBB' : '#666' }]}>{description}</Text>
+    </View>
+  </View>
+);
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [activeTab, setActiveTab] = useState<'list' | 'settings'>('list');
+  
+  // 1. Стан для вибору режиму теми: 'system', 'light', або 'dark'
+  const [themeMode, setThemeMode] = useState<'system' | 'light' | 'dark'>('system');
+  
+  // 2. Отримуємо системну тему пристрою
+  const systemColorScheme = useColorScheme();
+  
+  // 3. Визначаємо, яку тему відображати прямо зараз
+  const isDark = themeMode === 'system' ? systemColorScheme === 'dark' : themeMode === 'dark';
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  const data = Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    title: `Пункт меню ${i + 1}`,
+    description: `Опис елемента у ${isDark ? 'темній' : 'світлій'} темі.`,
+    icon: i % 2 === 0 ? '🎨' : '⚙️'
+  }));
+
+  // Динамічні кольори
+  const bgColor = isDark ? '#121212' : '#F5F5F5';
+  const textColor = isDark ? '#FFFFFF' : '#000000';
+
+  return (
+    <SafeAreaView style={[styles.container, { backgroundColor: bgColor }]}>
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+      
+      {/* Навігація між екранами */}
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tabButton, activeTab === 'list' && (isDark ? styles.activeTabDark : styles.activeTabLight)]} 
+          onPress={() => setActiveTab('list')}
+        >
+          <Text style={[styles.tabText, { color: activeTab === 'list' ? '#FFF' : (isDark ? '#AAA' : '#666') }]}>Список</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={[styles.tabButton, activeTab === 'settings' && (isDark ? styles.activeTabDark : styles.activeTabLight)]} 
+          onPress={() => setActiveTab('settings')}
+        >
+          <Text style={[styles.tabText, { color: activeTab === 'settings' ? '#FFF' : (isDark ? '#AAA' : '#666') }]}>Налаштування</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {activeTab === 'list' ? (
+          <View>
+            <Text style={[styles.title, { color: textColor }]}>Ваш контент</Text>
+            {data.map((item) => <CardItem key={item.id} {...item} isDark={isDark} />)}
+          </View>
+        ) : (
+          <View style={styles.settingsContainer}>
+            <Text style={[styles.title, { color: textColor }]}>Вибір теми</Text>
+            
+            {/* Кнопки вибору теми */}
+            {(['system', 'light', 'dark'] as const).map((mode) => (
+              <TouchableOpacity 
+                key={mode}
+                style={[
+                  styles.themeOption, 
+                  themeMode === mode && styles.themeOptionSelected,
+                  { backgroundColor: isDark ? '#252525' : '#EAEAEA' }
+                ]}
+                onPress={() => setThemeMode(mode)}
+              >
+                <Text style={{ color: textColor, fontWeight: themeMode === mode ? 'bold' : 'normal' }}>
+                  {mode === 'system' ? '🤖 Системна' : mode === 'light' ? '☀️ Світла' : '🌙 Темна'}
+                </Text>
+                {themeMode === mode && <Text style={{ color: '#007AFF' }}>✓</Text>}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === 'android' ? 40 : 0,
+  },
+  tabContainer: {
     flexDirection: 'row',
+    justifyContent: 'center',
+    padding: 15,
+    gap: 10,
+  },
+  tabButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: 20,
+    backgroundColor: 'rgba(150,150,150,0.1)',
+  },
+  activeTabLight: { backgroundColor: '#007AFF' },
+  activeTabDark: { backgroundColor: '#555' },
+  tabText: { fontWeight: '600' },
+  scrollContent: { padding: 20 },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+  // Картки
+  card: {
+    flexDirection: 'row',
+    padding: 15,
+    borderRadius: 15,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  cardIconContainer: { marginRight: 15, justifyContent: 'center' },
+  cardTextContainer: { flex: 1 },
+  cardTitle: { fontSize: 16, fontWeight: 'bold' },
+  cardSubtitle: { fontSize: 13, marginTop: 4 },
+  // Налаштування
+  settingsContainer: { gap: 10 },
+  themeOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 15,
+    borderRadius: 12,
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  themeOptionSelected: {
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  }
 });

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../providers/AuthProvider';
 import { 
   StyleSheet, View, Text, TouchableOpacity, 
   ScrollView, SafeAreaView, useColorScheme, Platform, StatusBar, TextInput, Keyboard, Image, Modal
@@ -27,6 +29,34 @@ const CardItem = ({ title, description, isDark, image, onPress }: any) => (
     </View>
   </TouchableOpacity>
 );
+
+// --- Компонент секції інформації про користувача в налаштуваннях ---
+const UserInfoSection = ({ isDark, textColor }: { isDark: boolean; textColor: string }) => {
+  const { user, signOut } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    signOut();
+    router.replace('/login');
+  };
+
+  return (
+    <View style={{ marginBottom: 16 }}>
+      <Text style={{ color: textColor, fontWeight: '600', marginBottom: 8 }}>Поточний користувач</Text>
+      {user ? (
+        <View style={{ padding: 12, borderRadius: 10, backgroundColor: isDark ? '#252525' : '#EAEAEA' }}>
+          <Text style={{ color: textColor, fontWeight: '700' }}>{user.name ?? user.username}</Text>
+          {user.email ? <Text style={{ color: textColor, marginTop: 4 }}>{user.email}</Text> : null}
+          <TouchableOpacity onPress={handleLogout} style={[styles.closeButton, { marginTop: 12 }]}>
+            <Text style={styles.closeButtonText}>Вийти</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <Text style={{ color: textColor }}>Немає авторизованого користувача</Text>
+      )}
+    </View>
+  );
+};
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<'list' | 'addContent' | 'settings'>('list');
@@ -159,8 +189,12 @@ export default function HomeScreen() {
           </View>
         ) : (
           <View style={styles.settingsContainer}>
-            <Text style={[styles.title, { color: textColor }]}>Вибір теми</Text>
-            
+            <Text style={[styles.title, { color: textColor }]}>Налаштування</Text>
+
+            {/* Показати інформацію про поточного користувача та можливість вийти */}
+            <UserInfoSection isDark={isDark} textColor={textColor} />
+
+            <Text style={[styles.title, { color: textColor, fontSize: 18 }]}>Вибір теми</Text>
             {/* Кнопки вибору теми */}
             {(['system', 'light', 'dark'] as const).map((mode) => (
               <TouchableOpacity 

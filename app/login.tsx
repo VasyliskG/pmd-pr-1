@@ -8,26 +8,32 @@ import { useRouter } from 'expo-router';
 import { useAuth } from './providers/AuthProvider';
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { signIn, isLoading } = useAuth();
+  const { signIn, isLoading, error: authError } = useAuth();
+
+  React.useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
 
   const handleSubmit = async () => {
     setError(null);
 
-    if (!username.trim() || !password.trim()) {
-      setError('Введіть логін та пароль');
+    if (!email.trim() || !password.trim()) {
+      setError('Введіть email та пароль');
       return;
     }
 
-    const ok = await signIn(username.trim(), password);
+    const ok = await signIn(email.trim(), password);
 
     if (ok) {
       router.replace('/(tabs)');
     } else {
-      setError('Невірний логін або пароль');
+      // Помилка вже встановлена через authError
     }
   };
 
@@ -45,11 +51,12 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>Введіть дані для входу</Text>
 
             <TextInput
-                value={username}
-                onChangeText={setUsername}
-                placeholder="Ім'я користувача"
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Email"
                 style={styles.input}
                 autoCapitalize="none"
+                keyboardType="email-address"
                 editable={!isLoading}
                 returnKeyType="next"
             />
@@ -82,12 +89,12 @@ export default function LoginScreen() {
             <View style={styles.hintContainer}>
               <Text style={styles.hintTitle}>Тестові облікові записи:</Text>
               <View style={styles.hintRow}>
-                <Text style={styles.hintLabel}>alice</Text>
-                <Text style={styles.hintValue}>password</Text>
+                <Text style={styles.hintLabel}>user@example.com</Text>
+                <Text style={styles.hintValue}>password123</Text>
               </View>
               <View style={styles.hintRow}>
-                <Text style={styles.hintLabel}>bob</Text>
-                <Text style={styles.hintValue}>123456</Text>
+                <Text style={styles.hintLabel}>admin@example.com</Text>
+                <Text style={styles.hintValue}>admin123</Text>
               </View>
             </View>
           </View>
@@ -174,6 +181,5 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   hintLabel: { color: '#666', fontFamily: 'monospace' },
-  hintText: { color: '#666' },
   hintValue: { color: '#007AFF', fontFamily: 'monospace', fontWeight: '600' },
 });

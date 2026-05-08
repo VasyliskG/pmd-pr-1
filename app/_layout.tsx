@@ -14,7 +14,6 @@ function AuthGuard() {
     const pathname = usePathname();
 
     useEffect(() => {
-        // Не редиректимо під час завантаження
         if (pathname === '/') return;
 
         const isAuthRoute = pathname === '/login';
@@ -37,7 +36,6 @@ function RootLayoutNav() {
         <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack>
                 {!user ? (
-                    // Тільки логін якщо не авторизований
                     <Stack.Screen
                         name="login"
                         options={{
@@ -46,13 +44,18 @@ function RootLayoutNav() {
                         }}
                     />
                 ) : (
-                    // Основна навігація якщо авторизований
                     <>
                         <Stack.Screen
                             name="(tabs)"
                             options={{
                                 headerShown: false,
                                 title: 'Головна'
+                            }}
+                        />
+                        <Stack.Screen
+                            name="post-details"
+                            options={{
+                                title: 'Деталі поста',
                             }}
                         />
                         <Stack.Screen
@@ -83,7 +86,6 @@ export default function Root() {
     const [isReady, setIsReady] = useState(false);
 
     useEffect(() => {
-        // Даємо час на ініціалізацію
         setTimeout(() => setIsReady(true), 100);
     }, []);
 

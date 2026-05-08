@@ -32,6 +32,13 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
+                name="posts"
+                options={{
+                    title: 'Публікації',
+                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="rectangle.stack.fill" color={color} />,
+                }}
+            />
+            <Tabs.Screen
                 name="explore"
                 options={{
                     title: 'Огляд',
@@ -42,7 +49,7 @@ export default function TabLayout() {
                 name="profile"
                 options={{
                     title: 'Профіль',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
                 }}
             />
         </Tabs>

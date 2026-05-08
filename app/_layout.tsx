@@ -4,12 +4,11 @@ import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
-
+import { useAppStore } from './store/appStore';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { AuthProvider, useAuth } from './providers/AuthProvider';
 
 function AuthGuard() {
-    const { user } = useAuth();
+    const { user } = useAppStore();
     const router = useRouter();
     const pathname = usePathname();
 
@@ -29,11 +28,14 @@ function AuthGuard() {
 }
 
 function RootLayoutNav() {
-    const { user } = useAuth();
+    const { user, theme } = useAppStore();
     const colorScheme = useColorScheme();
 
+    // Використовуємо тему з магазину або системну
+    const effectiveTheme = theme || colorScheme;
+
     return (
-        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ThemeProvider value={effectiveTheme === 'dark' ? DarkTheme : DefaultTheme}>
             <Stack>
                 {!user ? (
                     <Stack.Screen
@@ -84,9 +86,13 @@ function LoadingScreen() {
 
 export default function Root() {
     const [isReady, setIsReady] = useState(false);
+    const initializeStore = useAppStore((state) => state.initializeStore);
 
     useEffect(() => {
-        setTimeout(() => setIsReady(true), 100);
+        // Ініціалізуємо магазин при запуску
+        initializeStore().then(() => {
+            setIsReady(true);
+        });
     }, []);
 
     if (!isReady) {
@@ -94,9 +100,7 @@ export default function Root() {
     }
 
     return (
-        <AuthProvider>
-            <RootLayoutNav />
-        </AuthProvider>
+        <RootLayoutNav />
     );
 }
 

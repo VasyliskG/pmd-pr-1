@@ -39,17 +39,17 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="explore"
+                name="settings"
                 options={{
-                    title: 'Огляд',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+                    title: 'Налаштування',
+                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="chevron.right" color={color} />,
                 }}
             />
             <Tabs.Screen
                 name="profile"
                 options={{
                     title: 'Профіль',
-                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="person" color={color} />,
+                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle.fill" color={color} />,
                 }}
             />
         </Tabs>

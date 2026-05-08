@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, View, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAppStore } from '../store/appStore';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -18,7 +19,10 @@ export default function PostsScreen() {
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
 
-    const [posts, setPosts] = useState<Post[]>([]);
+    const posts = useAppStore((state) => state.posts);
+    const setPosts = useAppStore((state) => state.setPosts);
+    const isSessionOnly = useAppStore((state) => state.isSessionOnly);
+
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [refreshing, setRefreshing] = useState(false);
@@ -31,7 +35,7 @@ export default function PostsScreen() {
                 throw new Error('Помилка завантаження постів');
             }
             const data = await response.json();
-            setPosts(data);
+            await setPosts(data);
         } catch (err) {
             setError('Не вдалося завантажити пости. Перевірте з\'єднання.');
         } finally {
@@ -41,7 +45,12 @@ export default function PostsScreen() {
     };
 
     useEffect(() => {
-        fetchPosts();
+        // Якщо пости вже є в магазині — не завантажуємо знову
+        if (posts.length === 0) {
+            fetchPosts();
+        } else {
+            setIsLoading(false);
+        }
     }, []);
 
     const onRefresh = () => {
@@ -66,12 +75,25 @@ export default function PostsScreen() {
                 <TouchableOpacity style={styles.retryButton} onPress={fetchPosts}>
                     <ThemedText style={styles.retryText}>Спробувати знову</ThemedText>
                 </TouchableOpacity>
+                {isSessionOnly && (
+                    <ThemedText style={styles.sessionHint}>
+                        ℹ️ Режим сесії активний — дані не зберігаються
+                    </ThemedText>
+                )}
             </View>
         );
     }
 
     return (
         <ThemedView style={styles.container}>
+            {isSessionOnly && (
+                <View style={styles.sessionBanner}>
+                    <ThemedText style={styles.sessionBannerText}>
+                        🔒 Режим сесії: дані не зберігаються
+                    </ThemedText>
+                </View>
+            )}
+
             <FlatList
                 data={posts}
                 keyExtractor={(item) => item.id.toString()}
@@ -134,5 +156,23 @@ const styles = StyleSheet.create({
     retryText: {
         color: '#fff',
         fontWeight: '600',
+    },
+    sessionHint: {
+        marginTop: 16,
+        fontSize: 12,
+        opacity: 0.7,
+        fontStyle: 'italic',
+    },
+    sessionBanner: {
+        backgroundColor: '#FFF3CD',
+        padding: 12,
+        margin: 16,
+        borderRadius: 8,
+        borderLeftWidth: 4,
+        borderLeftColor: '#FFC107',
+    },
+    sessionBannerText: {
+        fontSize: 13,
+        color: '#856404',
     },
 });

@@ -5,20 +5,16 @@ import {
   KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from './providers/AuthProvider';
+import { useAppStore } from './store/appStore';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-  const { signIn, isLoading, error: authError } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
 
-  React.useEffect(() => {
-    if (authError) {
-      setError(authError);
-    }
-  }, [authError]);
+  const router = useRouter();
+  const login = useAppStore((state) => state.login);
 
   const handleSubmit = async () => {
     setError(null);
@@ -28,12 +24,37 @@ export default function LoginScreen() {
       return;
     }
 
-    const ok = await signIn(email.trim(), password);
+    setIsLoading(true);
 
-    if (ok) {
-      router.replace('/(tabs)');
-    } else {
-      // Помилка вже встановлена через authError
+    try {
+      // Імітуємо API запит (оскільки reqres.in вимагає ключ)
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Перевіряємо облікові дані локально
+      const validUsers = [
+        { email: 'test@example.com', password: 'password123', name: 'Test User' },
+        { email: 'admin@example.com', password: 'admin123', name: 'Admin User' },
+      ];
+
+      const found = validUsers.find(
+          u => u.email === email.trim() && u.password === password.trim()
+      );
+
+      if (found) {
+        // Зберігаємо користувача в магазині
+        await login('fake-token-' + Date.now(), {
+          username: email.split('@')[0],
+          name: found.name,
+          email: email.trim(),
+        });
+        router.replace('/(tabs)');
+      } else {
+        setError('Невірний email або пароль');
+      }
+    } catch (err) {
+      setError('Помилка з\'єднання. Перевірте інтернет.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -89,7 +110,7 @@ export default function LoginScreen() {
             <View style={styles.hintContainer}>
               <Text style={styles.hintTitle}>Тестові облікові записи:</Text>
               <View style={styles.hintRow}>
-                <Text style={styles.hintLabel}>user@example.com</Text>
+                <Text style={styles.hintLabel}>test@example.com</Text>
                 <Text style={styles.hintValue}>password123</Text>
               </View>
               <View style={styles.hintRow}>

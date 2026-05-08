@@ -4,13 +4,13 @@ import {
     View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../providers/AuthProvider';
+import { useAppStore } from '../store/appStore';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function ProfileScreen() {
-    const { user, signOut } = useAuth();
+    const { user, logout } = useAppStore();
     const router = useRouter();
     const colorScheme = useColorScheme();
     const isDark = colorScheme === 'dark';
@@ -24,8 +24,8 @@ export default function ProfileScreen() {
                 {
                     text: 'Вийти',
                     style: 'destructive',
-                    onPress: () => {
-                        signOut();
+                    onPress: async () => {
+                        await logout();
                         router.replace('/login');
                     }
                 },
@@ -43,7 +43,6 @@ export default function ProfileScreen() {
 
     return (
         <ScrollView style={[styles.container, { backgroundColor: isDark ? '#121212' : '#F5F5F5' }]}>
-            {/* Аватар */}
             <View style={styles.header}>
                 <View style={[styles.avatar, { backgroundColor: Colors[colorScheme ?? 'light'].tint }]}>
                     <Text style={styles.avatarText}>
@@ -58,7 +57,6 @@ export default function ProfileScreen() {
                 </Text>
             </View>
 
-            {/* Інформація */}
             <View style={[styles.infoCard, { backgroundColor: isDark ? '#1E1E1E' : '#fff' }]}>
                 <InfoRow
                     icon="person.fill"
@@ -84,30 +82,6 @@ export default function ProfileScreen() {
                 )}
             </View>
 
-            {/* Дії */}
-            <View style={styles.actions}>
-                <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: isDark ? '#1E1E1E' : '#fff' }]}
-                    onPress={() => {}}
-                >
-                    <IconSymbol size={20} name="gearshape.fill" color="#007AFF" />
-                    <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
-                        Налаштування
-                    </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    style={[styles.actionButton, { backgroundColor: isDark ? '#1E1E1E' : '#fff' }]}
-                    onPress={() => {}}
-                >
-                    <IconSymbol size={20} name="lock.fill" color="#007AFF" />
-                    <Text style={[styles.actionText, { color: isDark ? '#fff' : '#000' }]}>
-                        Безпека
-                    </Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Кнопка виходу */}
             <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                 <IconSymbol size={20} name="rectangle.portrait.and.arrow.right" color="#fff" />
                 <Text style={styles.logoutButtonText}>Вийти з акаунту</Text>
@@ -196,21 +170,14 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '500',
     },
-    actions: {
-        marginHorizontal: 16,
-        gap: 8,
-    },
     actionButton: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
-        borderRadius: 10,
-        gap: 12,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 2,
-        elevation: 2,
+        borderRadius: 12,
+        gap: 8,
+        marginHorizontal: 16,
+        marginTop: 8,
     },
     actionText: {
         fontSize: 16,

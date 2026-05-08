@@ -1,5 +1,9 @@
+// app/login.tsx
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  KeyboardAvoidingView, Platform, ActivityIndicator, ScrollView
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from './providers/AuthProvider';
 
@@ -8,64 +12,168 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { signIn } = useAuth();
+  const { signIn, isLoading } = useAuth();
 
   const handleSubmit = async () => {
     setError(null);
+
+    if (!username.trim() || !password.trim()) {
+      setError('Введіть логін та пароль');
+      return;
+    }
+
     const ok = await signIn(username.trim(), password);
+
     if (ok) {
       router.replace('/(tabs)');
     } else {
-      setError('Неправильний логін або пароль');
+      setError('Невірний логін або пароль');
     }
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Вхід</Text>
+      <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.container}
+      >
+        <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.card}>
+            <Text style={styles.title}>Вхід</Text>
+            <Text style={styles.subtitle}>Введіть дані для входу</Text>
 
-        <TextInput
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Ім'я користувача"
-          style={styles.input}
-          autoCapitalize="none"
-        />
+            <TextInput
+                value={username}
+                onChangeText={setUsername}
+                placeholder="Ім'я користувача"
+                style={styles.input}
+                autoCapitalize="none"
+                editable={!isLoading}
+                returnKeyType="next"
+            />
 
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Пароль"
-          secureTextEntry
-          style={styles.input}
-        />
+            <TextInput
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Пароль"
+                secureTextEntry
+                style={styles.input}
+                editable={!isLoading}
+                returnKeyType="done"
+                onSubmitEditing={handleSubmit}
+            />
 
-        {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={styles.error}>{error}</Text> : null}
 
-        <TouchableOpacity style={styles.button} onPress={handleSubmit}>
-          <Text style={styles.buttonText}>Увійти</Text>
-        </TouchableOpacity>
+            <TouchableOpacity
+                style={[styles.button, isLoading && styles.buttonDisabled]}
+                onPress={handleSubmit}
+                disabled={isLoading}
+            >
+              {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+              ) : (
+                  <Text style={styles.buttonText}>Увійти</Text>
+              )}
+            </TouchableOpacity>
 
-        <View style={styles.hintContainer}>
-          <Text style={styles.hintTitle}>Тестові користувачі:</Text>
-          <Text style={styles.hintText}>alice / password</Text>
-          <Text style={styles.hintText}>bob / 123456</Text>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+            <View style={styles.hintContainer}>
+              <Text style={styles.hintTitle}>Тестові облікові записи:</Text>
+              <View style={styles.hintRow}>
+                <Text style={styles.hintLabel}>alice</Text>
+                <Text style={styles.hintValue}>password</Text>
+              </View>
+              <View style={styles.hintRow}>
+                <Text style={styles.hintLabel}>bob</Text>
+                <Text style={styles.hintValue}>123456</Text>
+              </View>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  card: { width: '100%', maxWidth: 420, padding: 24, borderRadius: 12, backgroundColor: '#fff', elevation: 3 },
-  title: { fontSize: 24, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
-  input: { borderWidth: 1, borderColor: '#DDD', padding: 12, borderRadius: 8, marginBottom: 12 },
-  button: { backgroundColor: '#007AFF', padding: 12, borderRadius: 8, alignItems: 'center', marginTop: 8 },
-  buttonText: { color: '#fff', fontWeight: '600' },
-  error: { color: '#ff3b30', marginBottom: 8, textAlign: 'center' },
-  hintContainer: { marginTop: 12 },
-  hintTitle: { fontWeight: '600', marginBottom: 4 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 20
+  },
+  card: {
+    padding: 24,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
+    color: '#000',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#DDD',
+    padding: 14,
+    borderRadius: 10,
+    marginBottom: 12,
+    fontSize: 16,
+    backgroundColor: '#FAFAFA',
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: '#fff', fontWeight: '600', fontSize: 16 },
+  error: {
+    color: '#ff3b30',
+    marginBottom: 12,
+    textAlign: 'center',
+    fontSize: 14,
+    backgroundColor: '#FFE5E5',
+    padding: 8,
+    borderRadius: 6,
+  },
+  hintContainer: {
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 10,
+  },
+  hintTitle: {
+    fontWeight: '600',
+    marginBottom: 12,
+    color: '#333',
+    textAlign: 'center',
+  },
+  hintRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+  hintLabel: { color: '#666', fontFamily: 'monospace' },
   hintText: { color: '#666' },
+  hintValue: { color: '#007AFF', fontFamily: 'monospace', fontWeight: '600' },
 });

@@ -1,54 +1,107 @@
+// app/_layout.tsx
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useRouter, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from './providers/AuthProvider';
 
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
+function AuthGuard() {
+    const { user } = useAuth();
+    const router = useRouter();
+    const pathname = usePathname();
 
-function AuthRedirect() {
-  const { user } = useAuth();
-  const router = useRouter();
+    useEffect(() => {
+        // Не редиректимо під час завантаження
+        if (pathname === '/') return;
 
-  useEffect(() => {
-    // On mount or auth change, redirect to login if not authenticated
-    // Delay navigation until after the Root layout has mounted to avoid
-    // "Attempted to navigate before mounting the Root Layout component".
-    const id = setTimeout(() => {
-      if (!user) {
-        // if not already on login, go to /login
-        router.replace('/login');
-      } else {
-        // if authenticated, go to the main tabs
-        router.replace('/(tabs)');
-      }
-    }, 50);
+        const isAuthRoute = pathname === '/login';
 
-    return () => clearTimeout(id);
-  }, [user]);
+        if (!user && !isAuthRoute) {
+            router.replace('/login');
+        } else if (user && isAuthRoute) {
+            router.replace('/(tabs)');
+        }
+    }, [user, pathname]);
 
-  return null;
+    return null;
 }
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+function RootLayoutNav() {
+    const { user } = useAuth();
+    const colorScheme = useColorScheme();
 
-  return (
-    <AuthProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-        </Stack>
-        <AuthRedirect />
-        <StatusBar style="auto" />
-      </ThemeProvider>
-    </AuthProvider>
-  );
+    return (
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <Stack>
+                {!user ? (
+                    // Тільки логін якщо не авторизований
+                    <Stack.Screen
+                        name="login"
+                        options={{
+                            headerShown: false,
+                            title: 'Вхід'
+                        }}
+                    />
+                ) : (
+                    // Основна навігація якщо авторизований
+                    <>
+                        <Stack.Screen
+                            name="(tabs)"
+                            options={{
+                                headerShown: false,
+                                title: 'Головна'
+                            }}
+                        />
+                        <Stack.Screen
+                            name="modal"
+                            options={{
+                                presentation: 'modal',
+                                title: 'Modal'
+                            }}
+                        />
+                    </>
+                )}
+            </Stack>
+            <AuthGuard />
+            <StatusBar style="auto" />
+        </ThemeProvider>
+    );
 }
+
+function LoadingScreen() {
+    return (
+        <View style={styles.loading}>
+            <ActivityIndicator size="large" />
+        </View>
+    );
+}
+
+export default function Root() {
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        // Даємо час на ініціалізацію
+        setTimeout(() => setIsReady(true), 100);
+    }, []);
+
+    if (!isReady) {
+        return <LoadingScreen />;
+    }
+
+    return (
+        <AuthProvider>
+            <RootLayoutNav />
+        </AuthProvider>
+    );
+}
+
+const styles = StyleSheet.create({
+    loading: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+});
